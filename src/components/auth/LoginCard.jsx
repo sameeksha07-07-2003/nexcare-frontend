@@ -1,8 +1,39 @@
 import { useState } from 'react';
-import nexcareLogo from '../../assets/logo/nexcare-logo.svg';
+import { useForm } from 'react-hook-form';
+import { login as loginRequest } from '../../api/authApi';
+import { useAuth } from '../../context/AuthContext';
+import { Link } from 'react-router-dom';
+
+// Turns whatever went wrong into a sentence a user can read.
+function getLoginErrorMessage(error) {
+    if (!error.isAxiosError) return error.message;
+    if (!error.response) return 'Cannot reach the server. Check your connection and try again.';
+    if (error.response.status === 401) {
+        return error.response.data?.message || 'Invalid email or password.';
+    }
+    return error.response.data?.message || 'Something went wrong. Please try again.';
+}
 
 function LoginCard() {
     const [showPassword, setShowPassword] = useState(false);
+    const [serverError, setServerError] = useState('');
+    const { login } = useAuth();
+
+    const {
+        register,
+        handleSubmit,
+        formState: { errors, isSubmitting },
+    } = useForm({ defaultValues: { email: '', password: '' } });
+
+    const onSubmit = async (values) => {
+        setServerError('');
+        try {
+            const { token } = await loginRequest(values);
+            login(token); // saves the session; PublicOnlyRoute then redirects automatically
+        } catch (error) {
+            setServerError(getLoginErrorMessage(error));
+        }
+    };
 
     return (
         <div className="w-full max-w-md py-4">
@@ -14,7 +45,14 @@ function LoginCard() {
             </p>
 
             {/* Form */}
-            <form className="mt-5 space-y-4">
+            <form onSubmit={handleSubmit(onSubmit, () => setServerError(''))} noValidate className="mt-5 space-y-4">
+
+                {/* Server error banner */}
+                {serverError && (
+                    <div role="alert" className="rounded-xl border border-red-200 bg-red-50 px-4 py-2.5 text-sm text-red-700">
+                        {serverError}
+                    </div>
+                )}
 
                 {/* Email */}
                 <div>
@@ -27,13 +65,23 @@ function LoginCard() {
                         </svg>
                         <input
                             id="email"
-                            name="email"
                             type="email"
                             autoComplete="email"
                             placeholder="Enter your email address"
-                            className="w-full pl-11 pr-4 py-2.5 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-[#10A9A5] focus:border-transparent transition"
+                            aria-invalid={errors.email ? 'true' : undefined}
+                            className={`w-full pl-11 pr-4 py-2.5 rounded-xl border text-sm focus:outline-none focus:ring-2 focus:ring-[#10A9A5] focus:border-transparent transition ${errors.email ? 'border-red-400' : 'border-slate-200'}`}
+                            {...register('email', {
+                                required: 'Enter your email address.',
+                                pattern: {
+                                    value: /^[^\s@]+@[^\s@]+\.[^\s@]+$/,
+                                    message: 'Enter a valid email address.',
+                                },
+                            })}
                         />
                     </div>
+                    {errors.email && (
+                        <p role="alert" className="mt-1 text-xs text-red-600">{errors.email.message}</p>
+                    )}
                 </div>
 
                 {/* Password */}
@@ -47,11 +95,12 @@ function LoginCard() {
                         </svg>
                         <input
                             id="password"
-                            name="password"
                             type={showPassword ? 'text' : 'password'}
                             autoComplete="current-password"
                             placeholder="Enter your password"
-                            className="w-full pl-11 pr-11 py-2.5 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-[#10A9A5] focus:border-transparent transition"
+                            aria-invalid={errors.password ? 'true' : undefined}
+                            className={`w-full pl-11 pr-11 py-2.5 rounded-xl border text-sm focus:outline-none focus:ring-2 focus:ring-[#10A9A5] focus:border-transparent transition ${errors.password ? 'border-red-400' : 'border-slate-200'}`}
+                            {...register('password', { required: 'Enter your password.' })}
                         />
                         <button
                             type="button"
@@ -71,9 +120,12 @@ function LoginCard() {
                             )}
                         </button>
                     </div>
+                    {errors.password && (
+                        <p role="alert" className="mt-1 text-xs text-red-600">{errors.password.message}</p>
+                    )}
                 </div>
 
-                {/* Remember me / Forgot password */}
+                {/* Remember me / Forgot password (still visual only) */}
                 <div className="flex items-center justify-between text-sm">
                     <label htmlFor="remember" className="flex items-center gap-2 text-[#0B2D5C] cursor-pointer">
                         <input id="remember" name="remember" type="checkbox" defaultChecked className="w-4 h-4 accent-[#10A9A5]" />
@@ -87,9 +139,10 @@ function LoginCard() {
                 {/* Submit button */}
                 <button
                     type="submit"
-                    className="w-full flex items-center justify-center gap-2 bg-gradient-to-r from-[#14B8B3] to-[#0E8C88] text-white font-semibold py-2.5 rounded-xl hover:opacity-90 active:scale-[0.98] transition"
+                    disabled={isSubmitting}
+                    className="w-full flex items-center justify-center gap-2 bg-gradient-to-r from-[#14B8B3] to-[#0E8C88] text-white font-semibold py-2.5 rounded-xl hover:opacity-90 active:scale-[0.98] transition disabled:opacity-60 disabled:cursor-not-allowed"
                 >
-                    Log In
+                    {isSubmitting ? 'Logging in…' : 'Log In'}
                     <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                         <path strokeLinecap="round" strokeLinejoin="round" d="M17 8l4 4m0 0l-4 4m4-4H3" />
                     </svg>
@@ -104,8 +157,8 @@ function LoginCard() {
                 <div className="flex-1 h-px bg-slate-200" />
             </div>
 
-            {/* Google button */}
-            <button className="w-full flex items-center justify-center gap-3 border border-slate-200 rounded-xl py-2.5 text-sm font-medium text-[#0B2D5C] hover:bg-slate-50 transition">
+            {/* Google button (still visual only) */}
+            <button type="button" className="w-full flex items-center justify-center gap-3 border border-slate-200 rounded-xl py-2.5 text-sm font-medium text-[#0B2D5C] hover:bg-slate-50 transition">
                 <svg className="w-5 h-5" viewBox="0 0 24 24">
                     <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" />
                     <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" />
@@ -115,12 +168,12 @@ function LoginCard() {
                 Continue with Google
             </button>
 
-            {/* Signup link */}
+            {/* Signup link (still visual only; wired in Step 8) */}
             <p className="mt-4 text-center text-sm text-[#5B82AA]">
                 Don't have an account?{' '}
-                <button className="text-[#10A9A5] font-semibold hover:underline">
+                <Link to="/signup" className="text-[#10A9A5] font-semibold hover:underline">
                     Create an account
-                </button>
+                </Link>
             </p>
 
         </div>

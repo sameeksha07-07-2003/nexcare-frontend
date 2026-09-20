@@ -5,7 +5,12 @@ export default {
     "./src/**/*.{js,ts,jsx,tsx}",
   ],
   theme: {
-    extend: {},
+    extend: {
+      screens: {
+        // short laptop screens (viewport height), e.g. 1920x1080 at 125% zoom
+        short: { raw: "(max-height: 780px)" },
+      },
+    },
   },
   plugins: [],
 }

@@ -1,21 +1,31 @@
-import LoginCard from '../components/auth/LoginCard';
-import LoginForm from '../components/auth/LoginForm';
-import LoginHero from '../components/auth/LoginHero';
-import SignupForm from '../components/auth/SignupForm';
-const SignupPage = () => {
-   return (
-        // Added responsive grid columns to ensure form never squishes on small laptops
-        <div className="min-h-screen flex flex-col lg:grid lg:grid-cols-[1.1fr_1fr] xl:grid-cols-[1.3fr_1fr] 2xl:grid-cols-[1.45fr_1fr] bg-white overflow-hidden">
-            
-            {/* Left Side - Hero Section */}
-            <div className="hidden lg:block min-h-0 h-screen">
-                <LoginHero />
-            </div>
+import { useEffect } from "react";
+import signupBg from "../assets/images/signup_bg.png";
+import SignupLeftPanel from "../components/auth/SignupLeftPanel";
+import SignupForm from "../components/auth/SignupForm";
 
-            {/* Right Side - Login Form */}
-            <SignupForm/>
-        </div>
-    );
+export default function SignupPage() {
+  // Lock the browser scrollbar on this page; restored when leaving the page.
+  useEffect(() => {
+    const html = document.documentElement;
+    const prevHtml = html.style.overflow;
+    const prevBody = document.body.style.overflow;
+    html.style.overflow = "hidden";
+    document.body.style.overflow = "hidden";
+    return () => {
+      html.style.overflow = prevHtml;
+      document.body.style.overflow = prevBody;
+    };
+  }, []);
+
+  return (
+    <div
+      className="fixed inset-0 overflow-x-hidden overflow-y-auto bg-cover bg-center bg-no-repeat"
+      style={{ backgroundImage: `url(${signupBg})`, scrollbarWidth: "none" }}
+    >
+      <div className="flex min-h-full w-full items-center justify-center gap-6 px-4 py-2 sm:px-6 lg:justify-start lg:gap-8 lg:pl-8 lg:pr-4 xl:gap-4">
+        <SignupLeftPanel />
+        <SignupForm />
+      </div>
+    </div>
+  );
 }
-
-export default SignupPage

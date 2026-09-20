@@ -1,13 +1,7 @@
-import React from 'react'
-import LoginPage from './pages/LoginPage'
-import SignupPage from './pages/SignupPage'
+import AppRoutes from './routes/AppRoutes'
 
 const App = () => {
-  return (
-    <>
-    <LoginPage/>
-    </>
-  )
+  return <AppRoutes />
 }
 
 export default App
