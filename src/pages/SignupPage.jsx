@@ -1,9 +1,9 @@
-
+import LoginCard from '../components/auth/LoginCard';
 import LoginForm from '../components/auth/LoginForm';
 import LoginHero from '../components/auth/LoginHero';
-
-function LoginPage() {
-    return (
+import SignupForm from '../components/auth/SignupForm';
+const SignupPage = () => {
+   return (
         // Added responsive grid columns to ensure form never squishes on small laptops
         <div className="min-h-screen flex flex-col lg:grid lg:grid-cols-[1.1fr_1fr] xl:grid-cols-[1.3fr_1fr] 2xl:grid-cols-[1.45fr_1fr] bg-white overflow-hidden">
             
@@ -13,9 +13,9 @@ function LoginPage() {
             </div>
 
             {/* Right Side - Login Form */}
-            <LoginForm/>
+            <SignupForm/>
         </div>
     );
 }
 
-export default LoginPage;
+export default SignupPage
