@@ -1,6 +1,7 @@
 import { useEffect } from "react";
 import signupBg from "../assets/images/signup_bg.png";
 import SignupLeftPanel from "../components/auth/SignupLeftPanel";
+import SignupRightPanel from "../components/auth/SignupRightPanel";
 import SignupForm from "../components/auth/SignupForm";
 
 export default function SignupPage() {
@@ -25,6 +26,7 @@ export default function SignupPage() {
       <div className="flex min-h-full w-full items-center justify-center gap-6 px-4 py-2 sm:px-6 lg:justify-start lg:gap-8 lg:pl-8 lg:pr-4 xl:gap-4">
         <SignupLeftPanel />
         <SignupForm />
+        <SignupRightPanel/>
       </div>
     </div>
   );

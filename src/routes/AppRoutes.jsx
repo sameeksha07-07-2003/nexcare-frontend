@@ -1,8 +1,10 @@
+// src/routes/AppRoutes.jsx
 import { BrowserRouter, Navigate, Outlet, Route, Routes, useLocation } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import LoginPage from '../pages/LoginPage'
 import SignupPage from '../pages/SignupPage'
 import DashboardPage from '../pages/DashboardPage'
+import PatientProfilePage from '../pages/PatientProfilePage'
 import ProtectedRoute from './ProtectedRoute'
 
 // Mirror image of ProtectedRoute: keeps LOGGED-IN users out of /login and /signup.
@@ -31,6 +33,7 @@ function AppRoutes() {
                 </Route>
 
                 {/* Only for logged-in users */}
+                    <Route path="/profile" element={<PatientProfilePage />} />
                 <Route element={<ProtectedRoute />}>
                     <Route path="/dashboard" element={<DashboardPage />} />
                 </Route>

@@ -15,11 +15,19 @@ const GENDER_OPTIONS = [
   { value: "MALE", label: "Male" },
   { value: "FEMALE", label: "Female" },
   { value: "OTHER", label: "Other" },
+  { value: "PREFER_NOT_TO_SAY", label: "Prefer not to say" },
 ];
 
-const BLOOD_GROUP_OPTIONS = ["A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-"].map(
-  (group) => ({ value: group, label: group }),
-);
+const BLOOD_GROUP_OPTIONS = [
+  { value: "A_POSITIVE", label: "A+" },
+  { value: "A_NEGATIVE", label: "A-" },
+  { value: "B_POSITIVE", label: "B+" },
+  { value: "B_NEGATIVE", label: "B-" },
+  { value: "AB_POSITIVE", label: "AB+" },
+  { value: "AB_NEGATIVE", label: "AB-" },
+  { value: "O_POSITIVE", label: "O+" },
+  { value: "O_NEGATIVE", label: "O-" },
+];
 
 // yyyy-mm-dd in local time, the format <input type="date"> uses.
 function getToday() {
@@ -42,7 +50,6 @@ export default function PatientStep2() {
   const { setFocus } = useFormContext();
   const today = getToday();
 
-  // The Continue button disappears on Step 2, so move focus to the first field.
   useEffect(() => {
     setFocus("gender");
   }, [setFocus]);

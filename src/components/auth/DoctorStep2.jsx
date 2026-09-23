@@ -66,8 +66,9 @@ export default function DoctorStep2() {
         icon={Calendar}
         max={today}
         rules={{
-          validate: (value) => !value || value <= today || "Invalid date",
-        }}
+  required: "Enter reg. date",
+  validate: (value) => value <= today || "Invalid date",
+}}
       />
       <TextField
         name="yearOfPassing"
