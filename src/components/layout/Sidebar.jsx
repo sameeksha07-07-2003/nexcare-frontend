@@ -9,10 +9,10 @@ import {
   User2,
   Headset,
   Settings,
-  X,
+  X,HandHeart,
 } from "lucide-react";
 import logo from "../../assets/logo/nexcare-logo.svg";
-import LeafDecoration from "../common/LeafDecoration";
+
 
 // NOTE: only "Home" (-> /dashboard) and "My Profile" (-> /profile) have real
 // pages behind them right now. The rest are listed here to match the target
@@ -65,15 +65,18 @@ function SidebarContent({ onNavigate, showLogo = true }) {
         ))}
       </nav>
 
-      <div className="relative overflow-hidden mt-auto bg-teal-50 rounded-2xl p-4 pb-16">
-        <p className="font-heading font-extrabold text-[15px] text-navy-900 leading-tight">
+      {/* Simple two-line promo card — no decorative artwork, matches target */}
+      <div className="mt-auto  flex flex-col  gap-3 rounded-2xl bg-teal-50 p-8">
+  <HandHeart 
+      size={48}             /* Size badhane ke liye (default 24 hota hai) */
+      strokeWidth={1}       /* Stroke thick karne ke liye (default 2 hota hai) */
+      color="#35969D"       /* Aapka custom hex color */
+    />
+        <p className="font-heading font-extrabold text-[#35969D] text-[15px] leading-tight text-navy-900">
           Your Health
           <br />
           Our Priority
         </p>
-        <div className="absolute -bottom-2 -left-2 w-20 h-20 pointer-events-none rotate-180">
-          <LeafDecoration className="w-full h-full" />
-        </div>
       </div>
     </>
   );

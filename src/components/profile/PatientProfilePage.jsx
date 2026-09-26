@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React from "react";
 import { Pencil } from "lucide-react";
 import AppShell from "../layout/AppShell";
 import ProfileHero from "./ProfileHero";
@@ -6,38 +6,7 @@ import PersonalInfoCard from "./PersonalInfoCard";
 import HealthDetailsCard from "./HealthDetailsCard";
 import AddressEmergencyCard from "./AddressEmergencyCard";
 import ProfileSecurityCard from "./ProfileSecurityCard";
-
-import { getPatientProfile } from "../../api/patientApi";
-import { useAuth } from "../../context/AuthContext";
-import {
-  formatGender,
-  formatBloodGroup,
-  formatDate,
-  formatFullName,
-} from "../../utils/formatProfile";
-
-// Maps the real backend PatientProfileResponse shape -> what our cards expect.
-// Backend fields: email, firstName, lastName, phoneNumber, gender, dateOfBirth,
-// bloodGroup, address, emergencyContact (plain string), height, weight.
-function mapProfile(apiResponse, authUser) {
-  if (!apiResponse) return null;
-  return {
-    fullName: formatFullName(apiResponse.firstName, apiResponse.lastName),
-    email: apiResponse.email || authUser?.email,
-    phone: apiResponse.phoneNumber,
-    role: "Patient",
-    isActive: true, // backend has no status field yet; assume active once logged in
-    avatarUrl: null, // backend has no photo field yet; Avatar falls back to gender default
-    gender: formatGender(apiResponse.gender),
-    genderRaw: apiResponse.gender, // used by Avatar for the default illustration
-    dateOfBirth: formatDate(apiResponse.dateOfBirth),
-    bloodGroup: formatBloodGroup(apiResponse.bloodGroup),
-    height: apiResponse.height,
-    weight: apiResponse.weight,
-    address: apiResponse.address,
-    emergencyContact: apiResponse.emergencyContact,
-  };
-}
+import { useProfile } from "../../context/ProfileContext";
 
 function ProfileSkeleton() {
   const pulse = "animate-pulse rounded-[14px] bg-[#EAF4F3]";
@@ -76,29 +45,10 @@ function ProfileError({ onRetry }) {
 }
 
 export default function PatientProfilePage() {
-  const { user } = useAuth();
-  const [profile, setProfile] = useState(null);
-  const [status, setStatus] = useState("loading"); // loading | success | error
-
-  const loadProfile = () => {
-    setStatus("loading");
-    getPatientProfile()
-      .then((res) => {
-        // getPatientProfile() already returns the parsed body (see patientApi.js) —
-        // do NOT read res.data again here.
-        setProfile(mapProfile(res, user));
-        setStatus("success");
-      })
-      .catch(() => setStatus("error"));
-  };
-
-  useEffect(() => {
-    loadProfile();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  const { profile, status, loadProfile, setAvatarUrl } = useProfile();
 
   return (
-    <AppShell user={user}>
+    <AppShell>
       <div className="mb-5 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h1 className="text-[22px] font-extrabold text-[#10273F] sm:text-[26px] md:text-[28px]">
@@ -118,12 +68,12 @@ export default function PatientProfilePage() {
         </button>
       </div>
 
-      {status === "loading" && <ProfileSkeleton />}
+      {(status === "loading" || status === "idle") && <ProfileSkeleton />}
       {status === "error" && <ProfileError onRetry={loadProfile} />}
 
       {status === "success" && (
         <>
-          <ProfileHero profile={profile} />
+          <ProfileHero profile={profile} onAvatarUploaded={setAvatarUrl} />
           <div className="grid grid-cols-1 gap-4 lg:grid-cols-[minmax(0,1.25fr)_minmax(320px,0.95fr)]">
             <div>
               <PersonalInfoCard profile={profile} />

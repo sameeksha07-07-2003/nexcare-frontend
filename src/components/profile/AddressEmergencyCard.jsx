@@ -14,7 +14,7 @@ export default function AddressEmergencyCard({ profile }) {
     >
       <div className="space-y-3">
         <div className="flex gap-3 rounded-[10px] bg-[#F2F9FA] p-4">
-          <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-white text-[#0EA394]">
+          <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#DBF4F5] text-[#04949D]">
             <House size={18} aria-hidden="true" />
           </span>
           <div className="min-w-0">
@@ -26,7 +26,7 @@ export default function AddressEmergencyCard({ profile }) {
         </div>
 
         <div className="flex gap-3 rounded-[10px] bg-[#F2F9FA] p-4">
-          <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-white text-[#0EA394]">
+          <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#DBF4F5] text-[#04949D]">
             <Phone size={18} aria-hidden="true" />
           </span>
           <div className="min-w-0">

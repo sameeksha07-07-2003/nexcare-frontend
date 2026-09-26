@@ -11,7 +11,7 @@ import React from "react";
 export default function InfoRow({ icon: Icon, label, value }) {
   return (
     <div className="flex items-center gap-3 rounded-[10px] bg-[#F2F9FA] px-[14px] py-3">
-      <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-white text-[#0EA394]">
+      <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#DBF4F5] text-[#04949D]">
         {Icon && <Icon size={18} strokeWidth={2} aria-hidden="true" />}
       </span>
       <div className="min-w-0">

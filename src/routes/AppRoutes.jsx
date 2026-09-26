@@ -33,9 +33,9 @@ function AppRoutes() {
                 </Route>
 
                 {/* Only for logged-in users */}
-                    <Route path="/profile" element={<PatientProfilePage />} />
                 <Route element={<ProtectedRoute />}>
                     <Route path="/dashboard" element={<DashboardPage />} />
+                    <Route path="/profile" element={<PatientProfilePage />} />
                 </Route>
 
                 {/* Any unknown URL */}
