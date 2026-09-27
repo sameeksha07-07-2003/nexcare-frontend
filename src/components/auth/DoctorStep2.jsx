@@ -1,20 +1,18 @@
-import { useEffect } from "react";
-import { useFormContext } from "react-hook-form";
 import {
   Award,
   BadgeCheck,
   Building2,
-  Calendar,
-  CalendarCheck,
+  CalendarDays,
   GraduationCap,
   Landmark,
+  MapPin,
   Stethoscope,
+  UserRoundCheck,
+  WalletCards,
 } from "lucide-react";
+
 import { TextField } from "./SignupFields";
 
-const EARLIEST_PASSING_YEAR = 1940;
-
-// yyyy-mm-dd in local time, the format <input type="date"> uses.
 function getToday() {
   const now = new Date();
   const month = String(now.getMonth() + 1).padStart(2, "0");
@@ -22,109 +20,174 @@ function getToday() {
   return `${now.getFullYear()}-${month}-${day}`;
 }
 
-// Required text field: an empty or spaces-only value is not accepted.
 function requiredText(message) {
-  return { validate: (value) => Boolean(value?.trim()) || message };
+  return {
+    required: message,
+    validate: (value) => Boolean(value?.trim()) || message,
+  };
+}
+
+function SectionTitle({ children, className = "" }) {
+  return (
+    <div className={`mb-3 mt-1 rounded-xl bg-[#EEF8F7] px-4 py-2.5 text-sm font-bold text-[#0B7773] ${className}`}>
+      {children}
+    </div>
+  );
 }
 
 export default function DoctorStep2() {
-  const { setFocus } = useFormContext();
   const today = getToday();
   const currentYear = new Date().getFullYear();
 
-  // The Continue button disappears on Step 2, so move focus to the first field.
-  // Skipped on touch screens, where it would open the keyboard straight away.
-  useEffect(() => {
-    if (window.matchMedia("(pointer: fine)").matches) {
-      setFocus("medicalRegistrationNumber");
-    }
-  }, [setFocus]);
-
   return (
-    <div className="grid grid-cols-2 gap-x-3">
-      <TextField
-        name="medicalRegistrationNumber"
-        label="Reg. number"
-        icon={BadgeCheck}
-        placeholder="Registration no."
-        autoComplete="off"
-        rules={requiredText("Enter reg. number")}
-      />
-      <TextField
-        name="medicalCouncil"
-        label="Council"
-        icon={Landmark}
-        placeholder="Medical council"
-        autoComplete="off"
-        rules={requiredText("Enter council")}
-      />
+    <div>
+      <SectionTitle>Registration details</SectionTitle>
+      <div className="grid grid-cols-1 gap-x-5 sm:grid-cols-2">
+        <TextField
+          name="medicalRegistrationNumber"
+          label="Medical registration number"
+          icon={BadgeCheck}
+          placeholder="Enter registration number"
+          autoComplete="off"
+          maxLength={100}
+          required
+          rules={requiredText("Enter your registration number")}
+        />
 
-      <TextField
-        name="registrationDate"
-        label="Reg. date"
-        type="date"
-        icon={Calendar}
-        max={today}
-        rules={{
-  required: "Enter reg. date",
-  validate: (value) => value <= today || "Invalid date",
-}}
-      />
-      <TextField
-        name="yearOfPassing"
-        label="Passing year"
-        icon={CalendarCheck}
-        inputMode="numeric"
-        maxLength={4}
-        placeholder="e.g. 2015"
-        autoComplete="off"
-        rules={{
-          validate: (value) => {
-            if (!value) return true;
-            const year = Number(value);
-            return (
-              (Number.isInteger(year) &&
-                year >= EARLIEST_PASSING_YEAR &&
-                year <= currentYear) ||
-              "Invalid year"
-            );
-          },
-        }}
-      />
+        <TextField
+          name="medicalCouncil"
+          label="Medical council"
+          icon={Landmark}
+          placeholder="Enter medical council"
+          autoComplete="off"
+          maxLength={150}
+          required
+          rules={requiredText("Enter your medical council")}
+        />
 
-      <TextField
-        name="specialization"
-        label="Specialization"
-        icon={Stethoscope}
-        placeholder="e.g. Cardiology"
-        autoComplete="off"
-        rules={requiredText("Enter specialization")}
-      />
-      <TextField
-        name="placeOfWork"
-        label="Place of work"
-        icon={Building2}
-        placeholder="Hospital / clinic"
-        autoComplete="organization"
-      />
+        <TextField
+          name="registrationDate"
+          label="Registration date"
+          type="date"
+          icon={CalendarDays}
+          max={today}
+          required
+          rules={{
+            required: "Enter your registration date",
+            validate: (value) => value <= today || "Registration date cannot be in the future",
+          }}
+        />
 
-      <div className="col-span-2">
+        <TextField
+          name="yearOfPassing"
+          label="Year of passing"
+          icon={Award}
+          type="number"
+          min="1950"
+          max={currentYear}
+          step="1"
+          placeholder="For example, 2018"
+          inputMode="numeric"
+          required
+          rules={{
+            required: "Enter your year of passing",
+            min: { value: 1950, message: "Year must be 1950 or later" },
+            max: { value: currentYear, message: "Year cannot be in the future" },
+          }}
+        />
+      </div>
+
+      <SectionTitle className="mt-2">Medical expertise</SectionTitle>
+      <div className="grid grid-cols-1 gap-x-5 sm:grid-cols-2">
         <TextField
           name="primaryQualification"
           label="Primary qualification"
           icon={GraduationCap}
-          placeholder="e.g. MBBS"
-          autoComplete="off"
-          rules={requiredText("Enter qualification")}
+          placeholder="For example, MBBS"
+          maxLength={255}
+          required
+          rules={requiredText("Enter your primary qualification")}
         />
-      </div>
-      <div className="col-span-2">
+
         <TextField
           name="additionalQualification"
           label="Additional qualification"
           icon={Award}
-          placeholder="e.g. MD (General Medicine)"
-          autoComplete="off"
+          placeholder="For example, MD General Medicine"
+          maxLength={255}
+          optionalLabel
+        />
+
+        <TextField
+          name="specialization"
+          label="Specialization"
+          icon={Stethoscope}
+          placeholder="For example, Cardiologist"
+          maxLength={150}
+          required
+          rules={requiredText("Enter your specialization")}
+        />
+
+        <TextField
+          name="yearsOfExperience"
+          label="Years of experience"
+          icon={UserRoundCheck}
+          type="number"
+          min="0"
+          max="80"
+          step="1"
+          placeholder="For example, 6"
+          inputMode="numeric"
+          required
+          rules={{
+            required: "Enter your years of experience",
+            min: { value: 0, message: "Experience cannot be negative" },
+            max: { value: 80, message: "Enter a valid experience" },
+          }}
+        />
+      </div>
+
+      <SectionTitle className="mt-2">Practice and consultation</SectionTitle>
+      <div className="grid grid-cols-1 gap-x-5 sm:grid-cols-2">
+        <TextField
+          name="placeOfWork"
+          label="Place of work"
+          icon={Building2}
+          placeholder="Hospital or clinic name"
+          autoComplete="organization"
+          maxLength={255}
+          required
+          rules={requiredText("Enter your place of work")}
+        />
+
+        <TextField
+          name="city"
+          label="City"
+          icon={MapPin}
+          placeholder="For example, Bhopal"
+          autoComplete="address-level2"
+          maxLength={100}
+          required
+          rules={requiredText("Enter your city")}
+        />
+
+        <TextField
+          name="consultationFee"
+          label="Consultation fee"
+          icon={WalletCards}
+          type="number"
+          min="0"
+          step="0.01"
+          placeholder="Amount in INR"
+          inputMode="decimal"
+          required
+          helperText="Patients will see this fee before booking."
+          className="sm:col-span-2"
+          rules={{
+            required: "Enter your consultation fee",
+            min: { value: 0, message: "Consultation fee cannot be negative" },
+            validate: (value) => Number.isFinite(Number(value)) || "Enter a valid consultation fee",
+          }}
         />
       </div>
     </div>

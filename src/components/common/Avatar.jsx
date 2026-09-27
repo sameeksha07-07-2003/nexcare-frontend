@@ -1,6 +1,7 @@
 // src/components/common/Avatar.jsx
 import defaultMale from "../../assets/images/avatar-male-default.svg";
 import defaultFemale from "../../assets/images/avatar-female-default.svg";
+import defaultDoctor from "../../assets/images/signup-doctor-avatar.png";
 
 const SIZES = {
   sm: "w-9 h-9 text-xs",
@@ -18,6 +19,7 @@ function getInitials(name = "") {
 
 export default function Avatar({
   photoUrl,
+  role,
   gender,       // "MALE" | "FEMALE" | "OTHER" | "PREFER_NOT_TO_SAY" | undefined
   name,
   size = "md",
@@ -25,6 +27,7 @@ export default function Avatar({
   className = "",
 }) {
   const sizeClasses = SIZES[size] || SIZES.md;
+  const normalizedRole = String(role || "").replace(/^ROLE_/, "").toUpperCase();
 
   // 1. Uploaded photo always wins
   if (photoUrl) {
@@ -37,7 +40,18 @@ export default function Avatar({
     );
   }
 
-  // 2. Gender-based default illustration
+  // 2. Doctors use a professional default illustration.
+  if (normalizedRole === "DOCTOR") {
+    return (
+      <img
+        src={defaultDoctor}
+        alt="Default doctor avatar"
+        className={`${sizeClasses} ${rounded} object-contain flex-shrink-0 bg-[#EAF9F7] ${className}`}
+      />
+    );
+  }
+
+  // 3. Gender-based default illustration for patients.
   if (gender === "MALE") {
     return (
       <img
@@ -57,7 +71,7 @@ export default function Avatar({
     );
   }
 
-  // 3. Fallback — initials on a gradient chip (used for doctors, or unspecified gender)
+  // 4. Fallback — initials when no suitable illustration is available.
   return (
     <div
       className={`${sizeClasses} ${rounded} flex-shrink-0 flex items-center justify-center font-bold font-heading text-white bg-gradient-to-br from-teal-400 to-teal-700 ${className}`}

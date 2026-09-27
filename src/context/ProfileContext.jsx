@@ -1,78 +1,208 @@
-// src/context/ProfileContext.jsx
-import { createContext, useCallback, useContext, useEffect, useState } from "react";
-import { getPatientProfile } from "../api/patientApi";
-import { useAuth } from "./AuthContext";
 import {
-  formatFullName,
-  formatGender,
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useState,
+} from "react"
+
+import { getMyDoctorProfile } from "../api/doctorApi"
+import { getPatientProfile } from "../api/patientApi"
+import {
   formatBloodGroup,
   formatDate,
-} from "../utils/formatProfile";
+  formatFullName,
+  formatGender,
+} from "../utils/formatProfile"
+import { useAuth } from "./AuthContext"
 
-const ProfileContext = createContext(null);
+const ProfileContext = createContext(null)
 
-// Maps the real backend PatientProfileResponse -> what our components expect.
-function mapProfile(apiResponse, authUser) {
-  if (!apiResponse) return null;
+function normalizeRole(role) {
+  return String(role || "").replace(/^ROLE_/, "").toUpperCase()
+}
+
+function mapPatientProfile(response, authUser) {
   return {
-    fullName: formatFullName(apiResponse.firstName, apiResponse.lastName),
-    email: apiResponse.email || authUser?.email,
-    phone: apiResponse.phoneNumber,
+    accountType: "PATIENT",
+    fullName: formatFullName(response.firstName, response.lastName),
+    firstName: response.firstName,
+    lastName: response.lastName,
+    email: response.email || authUser?.email,
+    phone: response.phoneNumber,
     role: "Patient",
-    isActive: true,
-    avatarUrl: apiResponse.photoUrl || null, // backend needs to add this field — see note below
-    gender: formatGender(apiResponse.gender),
-    genderRaw: apiResponse.gender,
-    dateOfBirth: formatDate(apiResponse.dateOfBirth),
-    bloodGroup: formatBloodGroup(apiResponse.bloodGroup),
-    height: apiResponse.height,
-    weight: apiResponse.weight,
-    address: apiResponse.address,
-    emergencyContact: apiResponse.emergencyContact,
-  };
+    avatarUrl: response.photoUrl || null,
+    gender: formatGender(response.gender),
+    genderRaw: response.gender,
+    dateOfBirth: formatDate(response.dateOfBirth),
+    bloodGroup: formatBloodGroup(response.bloodGroup),
+    height: response.height,
+    weight: response.weight,
+    address: response.address,
+    emergencyContact: response.emergencyContact,
+  }
+}
+
+function mapDoctorProfile(response, authUser) {
+  return {
+    accountType: "DOCTOR",
+    fullName: formatFullName(response.firstName, response.lastName),
+    firstName: response.firstName,
+    lastName: response.lastName,
+    email: response.email || authUser?.email,
+    phone: response.phoneNumber,
+    role: "Doctor",
+    avatarUrl: response.profileImageUrl || null,
+    medicalRegistrationNumber: response.medicalRegistrationNumber,
+    medicalCouncil: response.medicalCouncil,
+    registrationDate: response.registrationDate,
+    primaryQualification: response.primaryQualification,
+    additionalQualification: response.additionalQualification,
+    specialization: response.specialization,
+    yearOfPassing: response.yearOfPassing,
+    placeOfWork: response.placeOfWork,
+    city: response.city,
+    yearsOfExperience: response.yearsOfExperience,
+    bio: response.bio,
+    consultationFee: response.consultationFee,
+    averageRating: response.averageRating,
+    reviewCount: response.reviewCount,
+    verificationStatus: response.verificationStatus,
+  }
+}
+
+function getProfileLoader(role) {
+  if (role === "PATIENT") return getPatientProfile
+  if (role === "DOCTOR") return getMyDoctorProfile
+  return null
+}
+
+function mapProfile(role, response, authUser) {
+  return role === "DOCTOR"
+    ? mapDoctorProfile(response, authUser)
+    : mapPatientProfile(response, authUser)
 }
 
 export function ProfileProvider({ children }) {
-  const { user, isAuthenticated } = useAuth();
-  const [profile, setProfile] = useState(null);
-  const [status, setStatus] = useState("idle"); // idle | loading | success | error
+  const { user, role, isAuthenticated } = useAuth()
+  const normalizedRole = normalizeRole(role)
 
-  const loadProfile = useCallback(() => {
-    if (!isAuthenticated) return;
-    setStatus("loading");
-    getPatientProfile()
-      .then((res) => {
-        setProfile(mapProfile(res, user));
-        setStatus("success");
-      })
-      .catch(() => setStatus("error"));
-  }, [isAuthenticated, user]);
+  const [profileState, setProfileState] = useState({
+    profile: null,
+    status: "idle",
+    error: "",
+  })
 
-  // Fetch once, as soon as the user is logged in — this is what keeps
-  // Topbar and ProfileHero in sync without either of them re-fetching.
+  const fetchProfile = useCallback(async ({ signal } = {}) => {
+    const loader = getProfileLoader(normalizedRole)
+
+    if (!isAuthenticated || !loader) return null
+
+    const response = await loader({ signal })
+    return mapProfile(normalizedRole, response, user)
+  }, [isAuthenticated, normalizedRole, user])
+
   useEffect(() => {
-    if (isAuthenticated) {
-      loadProfile();
-    } else {
-      setProfile(null);
-      setStatus("idle");
+    const controller = new AbortController()
+    let active = true
+
+    Promise.resolve()
+      .then(() => {
+        if (!active) return null
+
+        if (!isAuthenticated) {
+          setProfileState({ profile: null, status: "idle", error: "" })
+          return null
+        }
+
+        setProfileState((current) => ({
+          ...current,
+          status: "loading",
+          error: "",
+        }))
+
+        return fetchProfile({ signal: controller.signal })
+      })
+      .then((profile) => {
+        if (!active || !isAuthenticated) return
+        setProfileState({ profile, status: "success", error: "" })
+      })
+      .catch((error) => {
+        if (!active || error?.code === "ERR_CANCELED") return
+
+        setProfileState({
+          profile: null,
+          status: "error",
+          error:
+            error?.response?.data?.message ||
+            "We could not load your profile.",
+        })
+      })
+
+    return () => {
+      active = false
+      controller.abort()
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isAuthenticated]);
+  }, [fetchProfile, isAuthenticated])
 
-  // Called right after a successful photo upload so every consumer
-  // (Topbar avatar + ProfileHero avatar) updates instantly, no refetch needed.
-  const setAvatarUrl = useCallback((url) => {
-    setProfile((prev) => (prev ? { ...prev, avatarUrl: url } : prev));
-  }, []);
+  const loadProfile = useCallback(async () => {
+    setProfileState((current) => ({
+      ...current,
+      status: "loading",
+      error: "",
+    }))
 
-  const value = { profile, status, loadProfile, setAvatarUrl };
-  return <ProfileContext.Provider value={value}>{children}</ProfileContext.Provider>;
+    try {
+      const profile = await fetchProfile()
+      setProfileState({ profile, status: "success", error: "" })
+      return profile
+    } catch (error) {
+      const message =
+        error?.response?.data?.message ||
+        "We could not load your profile."
+
+      setProfileState((current) => ({
+        ...current,
+        status: "error",
+        error: message,
+      }))
+      throw error
+    }
+  }, [fetchProfile])
+
+  const setAvatarUrl = useCallback((avatarUrl) => {
+    setProfileState((current) => ({
+      ...current,
+      profile: current.profile
+        ? { ...current.profile, avatarUrl }
+        : current.profile,
+    }))
+  }, [])
+
+  const value = useMemo(
+    () => ({
+      profile: profileState.profile,
+      status: profileState.status,
+      error: profileState.error,
+      loadProfile,
+      setAvatarUrl,
+    }),
+    [loadProfile, profileState, setAvatarUrl],
+  )
+
+  return (
+    <ProfileContext.Provider value={value}>
+      {children}
+    </ProfileContext.Provider>
+  )
 }
 
 // eslint-disable-next-line react-refresh/only-export-components
 export function useProfile() {
-  const ctx = useContext(ProfileContext);
-  if (!ctx) throw new Error("useProfile must be used inside <ProfileProvider>");
-  return ctx;
+  const context = useContext(ProfileContext)
+  if (!context) {
+    throw new Error("useProfile must be used inside <ProfileProvider>")
+  }
+  return context
 }

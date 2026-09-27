@@ -1,72 +1,174 @@
-// Turns the flat form values into the nested JSON body that POST /auth/signup expects.
-// Only fields listed here can ever leave the browser (an allow-list), so values like
-// confirmPassword, or the other role's fields, are never sent.
-
-// Trim text; leave numbers and other types alone. Never used on passwords.
-function text(value) {
+function trimText(value) {
   return typeof value === "string" ? value.trim() : value;
 }
 
-// Number inputs give strings. Blank or invalid input becomes undefined ("not provided").
-function toNumber(value) {
-  const trimmed = text(value);
-  if (trimmed === "" || trimmed === undefined || trimmed === null) return undefined;
-  const number = Number(trimmed);
-  return Number.isFinite(number) ? number : undefined;
+function optionalText(value) {
+  const trimmed = trimText(value);
+
+  return trimmed === "" ||
+    trimmed === null ||
+    trimmed === undefined
+    ? undefined
+    : trimmed;
 }
 
-// Optional fields: trim strings, then drop anything blank so we never send "" to the server.
-function omitEmpty(fields) {
-  const result = {};
-  for (const [key, raw] of Object.entries(fields)) {
-    const value = text(raw);
-    if (value !== "" && value !== undefined && value !== null) {
-      result[key] = value;
-    }
+function requiredNumber(value, fieldName) {
+  const number = Number(value);
+
+  if (!Number.isFinite(number)) {
+    throw new Error(
+      `${fieldName} must be a valid number.`,
+    );
   }
-  return result;
+
+  return number;
+}
+
+function optionalNumber(value) {
+  if (
+    value === "" ||
+    value === null ||
+    value === undefined
+  ) {
+    return undefined;
+  }
+
+  const number = Number(value);
+
+  return Number.isFinite(number)
+    ? number
+    : undefined;
+}
+
+function removeUndefined(object) {
+  return Object.fromEntries(
+    Object.entries(object).filter(
+      ([, value]) => value !== undefined,
+    ),
+  );
 }
 
 function buildPatientProfile(values) {
-  return omitEmpty({
+  return removeUndefined({
     gender: values.gender,
     dateOfBirth: values.dateOfBirth,
-    bloodGroup: values.bloodGroup,
-    address: values.address,
-    emergencyContact: values.emergencyContact,
-    height: toNumber(values.height),
-    weight: toNumber(values.weight),
+
+    bloodGroup: optionalText(
+      values.bloodGroup,
+    ),
+
+    address: optionalText(
+      values.address,
+    ),
+
+    emergencyContact: optionalText(
+      values.emergencyContact,
+    ),
+
+    height: optionalNumber(
+      values.height,
+    ),
+
+    weight: optionalNumber(
+      values.weight,
+    ),
   });
 }
 
 function buildDoctorProfile(values) {
-  return omitEmpty({
-    medicalRegistrationNumber: values.medicalRegistrationNumber,
-    medicalCouncil: values.medicalCouncil,
-    registrationDate: values.registrationDate,
-    primaryQualification: values.primaryQualification,
-    additionalQualification: values.additionalQualification,
-    specialization: values.specialization,
-    yearOfPassing: toNumber(values.yearOfPassing),
-    placeOfWork: values.placeOfWork,
+  return removeUndefined({
+    medicalRegistrationNumber: trimText(
+      values.medicalRegistrationNumber,
+    ),
+
+    medicalCouncil: trimText(
+      values.medicalCouncil,
+    ),
+
+    registrationDate:
+      values.registrationDate,
+
+    primaryQualification: trimText(
+      values.primaryQualification,
+    ),
+
+    additionalQualification: optionalText(
+      values.additionalQualification,
+    ),
+
+    specialization: trimText(
+      values.specialization,
+    ),
+
+    yearOfPassing: requiredNumber(
+      values.yearOfPassing,
+      "Year of passing",
+    ),
+
+    placeOfWork: trimText(
+      values.placeOfWork,
+    ),
+
+    city: trimText(
+      values.city,
+    ),
+
+    yearsOfExperience: requiredNumber(
+      values.yearsOfExperience,
+      "Years of experience",
+    ),
+
+    consultationFee: requiredNumber(
+      values.consultationFee,
+      "Consultation fee",
+    ),
   });
 }
 
 export function buildSignupPayload(values) {
-  const base = {
-    firstName: text(values.firstName),
-    lastName: text(values.lastName),
-    email: text(values.email),
-    phoneNumber: text(values.phoneNumber),
-    password: values.password, // never trimmed: spaces may be intentional
+  const account = {
+    firstName: trimText(
+      values.firstName,
+    ),
+
+    lastName: trimText(
+      values.lastName,
+    ),
+
+    email: trimText(
+      values.email,
+    ).toLowerCase(),
+
+    phoneNumber: trimText(
+      values.phoneNumber,
+    ),
+
+    // Never trim passwords.
+    // Spaces may be intentional characters.
+    password: values.password,
+
     role: values.role,
   };
 
   if (values.role === "PATIENT") {
-    return { ...base, patientProfile: buildPatientProfile(values) };
+    return {
+      ...account,
+
+      patientProfile:
+        buildPatientProfile(values),
+    };
   }
+
   if (values.role === "DOCTOR") {
-    return { ...base, doctorProfile: buildDoctorProfile(values) };
+    return {
+      ...account,
+
+      doctorProfile:
+        buildDoctorProfile(values),
+    };
   }
-  throw new Error(`Unsupported role: ${values.role}`);
+
+  throw new Error(
+    "Please choose a valid account type.",
+  );
 }

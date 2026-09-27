@@ -1,4 +1,3 @@
-import React from "react";
 
 /**
  * InfoRow — read-only [icon] label / value row used inside profile cards.

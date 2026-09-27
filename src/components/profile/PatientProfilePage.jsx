@@ -1,5 +1,3 @@
-import React from "react";
-import { Pencil } from "lucide-react";
 import AppShell from "../layout/AppShell";
 import ProfileHero from "./ProfileHero";
 import PersonalInfoCard from "./PersonalInfoCard";
@@ -58,14 +56,6 @@ export default function PatientProfilePage() {
             Manage your personal information and health details.
           </p>
         </div>
-        <button
-          className="flex w-fit items-center gap-2 rounded-[10px] bg-[#0EA394] px-4 py-[10px] text-[14px] font-semibold text-white transition-colors hover:bg-[#0B7F73]"
-          onClick={() => {
-            // Wire to your existing edit routing/modal implementation.
-          }}
-        >
-          <Pencil size={16} aria-hidden="true" /> Edit Profile
-        </button>
       </div>
 
       {(status === "loading" || status === "idle") && <ProfileSkeleton />}

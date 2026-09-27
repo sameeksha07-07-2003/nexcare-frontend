@@ -1,4 +1,3 @@
-import React from "react";
 
 /**
  * SectionCard — shared white card shell with the

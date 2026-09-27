@@ -1,120 +1,301 @@
-// src/components/layout/Sidebar.jsx
-import { NavLink } from "react-router-dom";
 import {
-  Home,
-  CalendarCheck,
-  FileText,
-  Stethoscope,
-  MessageSquare,
-  User2,
-  Headset,
-  Settings,
-  X,HandHeart,
-} from "lucide-react";
-import logo from "../../assets/logo/nexcare-logo.svg";
+    CalendarCheck,
+    FileText,
+    HandHeart,
+    Headset,
+    Home,
+    Settings,
+    Stethoscope,
+    User2,
+    UserRoundSearch,
+    X,
+} from "lucide-react"
+import {
+    NavLink,
+} from "react-router-dom"
 
+import logo from "../../assets/logo/nexcare-logo.svg"
+import { useAuth } from "../../context/AuthContext"
 
-// NOTE: only "Home" (-> /dashboard) and "My Profile" (-> /profile) have real
-// pages behind them right now. The rest are listed here to match the target
-// UI's navigation structure, but have no route/page yet — wire them up as
-// each feature gets built. Clicking them today will do nothing / 404.
-const NAV_ITEMS = [
-  { to: "/dashboard", label: "Home", icon: Home, ready: true },
-  { to: "/appointments", label: "Appointments", icon: CalendarCheck, ready: false },
-  { to: "/health-records", label: "Health Records", icon: FileText, ready: false },
-  { to: "/symptom-checker", label: "Symptom Checker", icon: Stethoscope, ready: false },
-  { to: "/messages", label: "Messages", icon: MessageSquare, ready: false, badge: 2 }, // dummy count
-  { to: "/profile", label: "My Profile", icon: User2, ready: true },
-  { to: "/support", label: "Help & Support", icon: Headset, ready: false },
-  { to: "/settings", label: "Settings", icon: Settings, ready: false },
-];
+const PATIENT_NAV_ITEMS = [
+    {
+        to: "/dashboard",
+        label: "Home",
+        icon: Home,
+        ready: true,
+    },
+    {
+        to: "/doctors",
+        label: "Find a Doctor",
+        icon: UserRoundSearch,
+        ready: true,
+    },
+    {
+        to: "/appointments",
+        label: "Appointments",
+        icon: CalendarCheck,
+        ready: true,
+    },
+    {
+        to: "/health-records",
+        label: "Health Records",
+        icon: FileText,
+        ready: false,
+    },
+    {
+        to: "/symptom-checker",
+        label: "Symptom Checker",
+        icon: Stethoscope,
+        ready: false,
+    },
+    {
+        to: "/profile",
+        label: "My Profile",
+        icon: User2,
+        ready: true,
+    },
+    {
+        to: "/support",
+        label: "Help & Support",
+        icon: Headset,
+        ready: false,
+    },
+    {
+        to: "/settings",
+        label: "Settings",
+        icon: Settings,
+        ready: false,
+    },
+]
 
-function SidebarContent({ onNavigate, showLogo = true }) {
-  return (
-    <>
-      {showLogo && <img src={logo} alt="NexCare" className="w-92" />}
+const DOCTOR_NAV_ITEMS = [
+    {
+        to: "/doctor",
+        label: "Home",
+        icon: Home,
+        ready: true,
+    },
+    {
+        to: "/doctor/appointments",
+        label: "Appointments",
+        icon: CalendarCheck,
+        ready: true,
+    },
+    {
+        to: "/doctor/availability",
+        label: "Availability",
+        icon: CalendarCheck,
+        ready: true,
+    },
+    {
+        to: "/doctor/profile",
+        label: "My Profile",
+        icon: User2,
+        ready: true,
+    },
+    {
+        to: "/doctor/settings",
+        label: "Settings",
+        icon: Settings,
+        ready: false,
+    },
+]
 
-      <nav className="flex flex-col gap-1">
-        {NAV_ITEMS.map(({ to, label, icon: Icon, ready, badge }) => (
-          <NavLink
-            key={to}
-            to={ready ? to : "#"}
-            onClick={(e) => {
-              if (!ready) {
-                e.preventDefault();
-                return;
-              }
-              onNavigate?.();
-            }}
-            className={({ isActive }) =>
-              `flex items-center gap-3 px-3 py-2.5 rounded-xl text-[13.5px] font-semibold transition ${
-                isActive && ready
-                  ? "bg-teal-50 text-teal-700"
-                  : "text-slate-600 hover:bg-slate-50"
-              } ${!ready ? "cursor-default" : ""}`
-            }
-          >
-            <Icon className="w-[18px] h-[18px] flex-shrink-0" />
-            <span className="flex-1">{label}</span>
-            {badge != null && (
-              <span className="w-5 h-5 rounded-full bg-teal-500 text-white text-[10px] font-bold flex items-center justify-center">
-                {badge}
-              </span>
+function SidebarContent({
+    items,
+    homePath,
+    onNavigate,
+    showLogo = true,
+}) {
+    return (
+        <>
+            {showLogo && (
+                <NavLink
+                    to={homePath}
+                    onClick={onNavigate}
+                    className="inline-flex shrink-0"
+                    aria-label="Go to NexCare dashboard"
+                >
+                    <img
+                        src={logo}
+                        alt="NexCare"
+                        className="h-auto w-48 max-w-full"
+                    />
+                </NavLink>
             )}
-          </NavLink>
-        ))}
-      </nav>
 
-      {/* Simple two-line promo card — no decorative artwork, matches target */}
-      <div className="mt-auto  flex flex-col  gap-3 rounded-2xl bg-teal-50 p-8">
-  <HandHeart 
-      size={48}             /* Size badhane ke liye (default 24 hota hai) */
-      strokeWidth={1}       /* Stroke thick karne ke liye (default 2 hota hai) */
-      color="#35969D"       /* Aapka custom hex color */
-    />
-        <p className="font-heading font-extrabold text-[#35969D] text-[15px] leading-tight text-navy-900">
-          Your Health
-          <br />
-          Our Priority
-        </p>
-      </div>
-    </>
-  );
+            <nav
+                className="flex flex-col gap-1"
+                aria-label="Dashboard navigation"
+            >
+                {items.map(
+                    ({
+                        to,
+                        label,
+                        icon: Icon,
+                        ready,
+                    }) => (
+                        <NavLink
+                            key={to}
+                            to={ready ? to : "#"}
+                            end={to === homePath}
+                            aria-disabled={!ready}
+                            title={
+                                ready
+                                    ? label
+                                    : `${label} — Coming soon`
+                            }
+                            onClick={(event) => {
+                                if (!ready) {
+                                    event.preventDefault()
+                                    return
+                                }
+
+                                onNavigate?.()
+                            }}
+                            className={({
+                                isActive,
+                            }) => {
+                                const active =
+                                    isActive && ready
+
+                                return [
+                                    "flex items-center gap-3",
+                                    "rounded-xl px-3 py-2.5",
+                                    "text-[13.5px] font-semibold",
+                                    "transition-colors duration-200",
+                                    active
+                                        ? "bg-[#E7F8F6] text-[#078B87]"
+                                        : "text-slate-600",
+                                    ready && !active
+                                        ? "hover:bg-slate-50 hover:text-[#078B87]"
+                                        : "",
+                                    !ready
+                                        ? "cursor-not-allowed opacity-60"
+                                        : "",
+                                ].join(" ")
+                            }}
+                        >
+                            <Icon
+                                className="h-[18px] w-[18px] shrink-0"
+                                strokeWidth={1.8}
+                                aria-hidden="true"
+                            />
+
+                            <span className="flex-1">
+                                {label}
+                            </span>
+
+                            {!ready && (
+                                <span className="sr-only">
+                                    Coming soon
+                                </span>
+                            )}
+                        </NavLink>
+                    ),
+                )}
+            </nav>
+
+            <div className="mt-auto flex shrink-0 flex-col gap-3 rounded-2xl bg-[#EAF9F7] p-7">
+                <HandHeart
+                    className="h-12 w-12 text-[#35969D]"
+                    strokeWidth={1.2}
+                    aria-hidden="true"
+                />
+
+                <div>
+                    <p className="font-heading text-[15px] font-extrabold leading-tight text-[#278A91]">
+                        Your Health
+                        <br />
+                        Our Priority
+                    </p>
+
+                    <p className="mt-2 text-xs leading-5 text-[#54708A]">
+                        Better care for a healthier
+                        tomorrow.
+                    </p>
+                </div>
+            </div>
+        </>
+    )
 }
 
-export default function Sidebar({ mobileOpen = false, onClose = () => {} }) {
-  return (
-    <>
-      {/* Desktop: static sidebar */}
-      <aside className="hidden md:flex w-64 gap-4 flex-col bg-white border-r border-teal-100 p-4 flex-shrink-0">
-        <SidebarContent />
-      </aside>
+function Sidebar({
+    mobileOpen = false,
+    onClose = () => {},
+}) {
+    const { role } = useAuth()
 
-      {/* Mobile: overlay drawer */}
-      {mobileOpen && (
-        <div className="fixed inset-0 z-50 md:hidden">
-          <button
-            aria-label="Close menu"
-            className="absolute inset-0 bg-black/40"
-            onClick={onClose}
-          />
-          <aside className="relative z-10 flex h-full w-72 max-w-[80vw] flex-col gap-4 bg-white p-4 shadow-xl">
-            <div className="flex items-center justify-between">
-              <img src={logo} alt="NexCare" className="w-40" />
-              <button
-                aria-label="Close menu"
-                onClick={onClose}
-                className="rounded-full p-1.5 text-slate-500 hover:bg-slate-100"
-              >
-                <X size={20} />
-              </button>
-            </div>
-            <div className="flex flex-1 flex-col gap-4 overflow-y-auto">
-              <SidebarContent onNavigate={onClose} showLogo={false} />
-            </div>
-          </aside>
-        </div>
-      )}
-    </>
-  );
+    const isDoctor = role === "DOCTOR"
+
+    const navigationItems = isDoctor
+        ? DOCTOR_NAV_ITEMS
+        : PATIENT_NAV_ITEMS
+
+    const homePath = isDoctor
+        ? "/doctor"
+        : "/dashboard"
+
+    return (
+        <>
+            {/* Desktop sidebar */}
+            <aside className="hidden w-64 shrink-0 flex-col gap-4 border-r border-[#DCEDEF] bg-white p-4 md:flex">
+                <SidebarContent
+                    items={navigationItems}
+                    homePath={homePath}
+                />
+            </aside>
+
+            {/* Mobile drawer */}
+            {mobileOpen && (
+                <div className="fixed inset-0 z-50 md:hidden">
+                    <button
+                        type="button"
+                        aria-label="Close navigation menu"
+                        className="absolute inset-0 bg-[#071E4A]/45 backdrop-blur-sm"
+                        onClick={onClose}
+                    />
+
+                    <aside className="relative z-10 flex h-full w-72 max-w-[85vw] flex-col gap-4 bg-white p-4 shadow-2xl">
+                        <div className="flex shrink-0 items-center justify-between">
+                            <NavLink
+                                to={homePath}
+                                onClick={onClose}
+                                aria-label="Go to NexCare dashboard"
+                            >
+                                <img
+                                    src={logo}
+                                    alt="NexCare"
+                                    className="h-auto w-40"
+                                />
+                            </NavLink>
+
+                            <button
+                                type="button"
+                                aria-label="Close navigation menu"
+                                onClick={onClose}
+                                className="flex h-9 w-9 items-center justify-center rounded-full text-slate-500 transition hover:bg-slate-100"
+                            >
+                                <X
+                                    size={20}
+                                    aria-hidden="true"
+                                />
+                            </button>
+                        </div>
+
+                        <div className="flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto">
+                            <SidebarContent
+                                items={navigationItems}
+                                homePath={homePath}
+                                onNavigate={onClose}
+                                showLogo={false}
+                            />
+                        </div>
+                    </aside>
+                </div>
+            )}
+        </>
+    )
 }
+
+export default Sidebar

@@ -1,4 +1,3 @@
-import React from "react";
 import { HeartPulse, UserRound, Droplet, Scale, CalendarDays, Ruler } from "lucide-react";
 import SectionCard from "../common/SectionCard";
 import InfoRow from "../common/InfoRow";

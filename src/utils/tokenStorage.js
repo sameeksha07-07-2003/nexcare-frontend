@@ -1,25 +1,17 @@
-const TOKEN_KEY = 'nexcare.token'
+const TOKEN_KEY = "nexcare_access_token"
 
 export function getToken() {
-  try {
-    return localStorage.getItem(TOKEN_KEY)
-  } catch {
-    return null
-  }
+    return sessionStorage.getItem(TOKEN_KEY)
 }
 
 export function setToken(token) {
-  try {
-    localStorage.setItem(TOKEN_KEY, token)
-  } catch {
-    // Storage can be blocked (e.g. some private modes); the app still works, just without persistence
-  }
+    if (!token || typeof token !== "string") {
+        throw new Error("A valid authentication token is required.")
+    }
+
+    sessionStorage.setItem(TOKEN_KEY, token)
 }
 
 export function clearToken() {
-  try {
-    localStorage.removeItem(TOKEN_KEY)
-  } catch {
-    // ignore
-  }
+    sessionStorage.removeItem(TOKEN_KEY)
 }

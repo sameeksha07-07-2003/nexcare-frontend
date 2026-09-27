@@ -1,4 +1,10 @@
-import { createContext, useContext, useState } from 'react'
+import {
+  createContext,
+  useContext,
+  useEffect,
+  useMemo,
+  useState,
+} from 'react'
 import { clearToken, getToken, setToken } from '../utils/tokenStorage'
 import { getSessionFromToken } from '../utils/jwt'
 
@@ -19,6 +25,50 @@ function readStoredSession() {
 export function AuthProvider({ children }) {
   const [session, setSession] = useState(readStoredSession)
 
+  useEffect(() => {
+    function handleUnauthorized() {
+      setSession(null)
+    }
+
+    window.addEventListener(
+      'nexcare:unauthorized',
+      handleUnauthorized,
+    )
+
+    return () => {
+      window.removeEventListener(
+        'nexcare:unauthorized',
+        handleUnauthorized,
+      )
+    }
+  }, [])
+
+  useEffect(() => {
+    if (!session?.expiresAt) {
+      return undefined
+    }
+
+    const remainingMilliseconds =
+      session.expiresAt - Date.now()
+
+    if (remainingMilliseconds <= 0) {
+      const timeoutId = window.setTimeout(() => {
+        clearToken()
+        setSession(null)
+      }, 0)
+
+      return () => window.clearTimeout(timeoutId)
+    }
+
+    const maximumTimeout = 2_147_483_647
+    const timeoutId = window.setTimeout(() => {
+      clearToken()
+      setSession(null)
+    }, Math.min(remainingMilliseconds, maximumTimeout))
+
+    return () => window.clearTimeout(timeoutId)
+  }, [session?.expiresAt])
+
   const login = (token) => {
     const next = getSessionFromToken(token)
     if (!next) throw new Error('The server returned an invalid login token.')
@@ -33,14 +83,22 @@ export function AuthProvider({ children }) {
     setSession(null)
   }
 
-  const value = {
-    user: session ? { email: session.email, role: session.role } : null,
-    token: session?.token ?? null,
-    role: session?.role ?? null,
-    isAuthenticated: Boolean(session),
-    login,
-    logout,
-  }
+  const value = useMemo(
+    () => ({
+      user: session
+        ? {
+            email: session.email,
+            role: session.role,
+          }
+        : null,
+      token: session?.token ?? null,
+      role: session?.role ?? null,
+      isAuthenticated: Boolean(session),
+      login,
+      logout,
+    }),
+    [session],
+  )
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>
 }

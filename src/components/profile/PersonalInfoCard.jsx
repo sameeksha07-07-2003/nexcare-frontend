@@ -1,4 +1,3 @@
-import React from "react";
 import { UserRound, Mail, Phone } from "lucide-react";
 import SectionCard from "../common/SectionCard";
 import InfoRow from "../common/InfoRow";

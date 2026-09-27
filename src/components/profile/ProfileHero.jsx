@@ -1,16 +1,13 @@
-import React, { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Mail, Phone, Camera, Loader2 } from "lucide-react";
 import Avatar from "../common/Avatar";
+import PhotoCropModal from "../common/PhotoCropModal";
 import { uploadPatientProfilePhoto } from "../../api/patientApi";
+import { useProfile } from "../../context/ProfileContext";
 
 const MAX_FILE_SIZE_BYTES = 50 * 1024 * 1024; // 50MB
 
-/**
- * ProfileHero — gradient identity card, with a click-to-upload avatar.
- * Pass onAvatarUploaded(url) so the parent (via ProfileContext) can sync
- * the new photo everywhere it's shown (this card + the Topbar).
- */
-export default function ProfileHero({ profile, onAvatarUploaded }) {
+export default function ProfileHero({ profile }) {
   const {
     fullName,
     role = "Patient",
@@ -21,20 +18,30 @@ export default function ProfileHero({ profile, onAvatarUploaded }) {
     genderRaw,
   } = profile || {};
 
+  const { setAvatarUrl, loadProfile } = useProfile();
+
   const fileInputRef = useRef(null);
+  const isMountedRef = useRef(true);
   const [uploading, setUploading] = useState(false);
   const [uploadError, setUploadError] = useState(null);
+  const [cropImageSrc, setCropImageSrc] = useState(null);
+
+  useEffect(() => {
+     isMountedRef.current = true;
+    return () => {
+      isMountedRef.current = false;
+    };
+  }, []);
 
   function handlePickPhoto() {
     fileInputRef.current?.click();
   }
 
-  async function handleFileChange(e) {
+  function handleFileChange(e) {
     const file = e.target.files?.[0];
-    e.target.value = ""; // allow re-selecting the same file later
+    e.target.value = "";
     if (!file) return;
 
-    // --- Client-side validation: caught before any network call ---
     if (!file.type.startsWith("image/")) {
       setUploadError("Please choose an image file.");
       return;
@@ -44,15 +51,45 @@ export default function ProfileHero({ profile, onAvatarUploaded }) {
       return;
     }
 
+    setUploadError(null);
+    setCropImageSrc(URL.createObjectURL(file));
+  }
+
+  function closeCropModal() {
+    if (cropImageSrc) URL.revokeObjectURL(cropImageSrc);
+    setCropImageSrc(null);
+  }
+
+  async function handleCropConfirm(croppedBlob) {
+    closeCropModal();
     try {
       setUploading(true);
       setUploadError(null);
-      const { photoUrl } = await uploadPatientProfilePhoto(file);
-      onAvatarUploaded?.(photoUrl);
+      const croppedFile = new File([croppedBlob], "profile-photo.jpg", { type: "image/jpeg" });
+      const { photoUrl } = await uploadPatientProfilePhoto(croppedFile);
+      if (isMountedRef.current) setAvatarUrl(photoUrl);
     } catch (err) {
-      setUploadError(getUploadErrorMessage(err));
+      const isTimeout = err.code === "ECONNABORTED" || /timeout/i.test(err.message || "");
+
+      if (isTimeout) {
+        // The request gave up client-side, but the backend may well have
+        // finished the upload anyway (it has its own 20s cap). Re-fetch the
+        // real profile after a short delay so the UI self-corrects instead
+        // of requiring the user to manually refresh.
+        if (isMountedRef.current) {
+          setUploadError("This is taking longer than usual — checking if it went through...");
+        }
+        setTimeout(() => {
+          if (isMountedRef.current) {
+            loadProfile();
+            setUploadError(null);
+          }
+        }, 4000);
+      } else if (isMountedRef.current) {
+        setUploadError(getUploadErrorMessage(err));
+      }
     } finally {
-      setUploading(false);
+      if (isMountedRef.current) setUploading(false);
     }
   }
 
@@ -119,28 +156,26 @@ export default function ProfileHero({ profile, onAvatarUploaded }) {
           Active
         </span>
       )}
+
+      {cropImageSrc && (
+        <PhotoCropModal
+          imageSrc={cropImageSrc}
+          onCancel={closeCropModal}
+          onConfirm={handleCropConfirm}
+        />
+      )}
     </div>
   );
 }
 
-// Turns a failed upload request into a message that tells the user WHY it
-// failed, instead of one generic "try again" for every case.
 function getUploadErrorMessage(err) {
   const status = err?.response?.status;
   const serverMessage = err?.response?.data?.message;
 
-  if (status === 413) {
-    // Backend/servlet rejected it for being too large (spring.servlet.multipart limits)
-    return "File size must be less than 50MB.";
-  }
-  if (status === 401 || status === 403) {
-    return "Your session has expired. Please log in again.";
-  }
-  if (!err?.response) {
-    // Request never reached the server (network down, backend not running, CORS block, etc.)
-    return "Couldn't reach the server. Check your connection and try again.";
-  }
-  // Any other server-side failure (500s, Cloudinary errors, etc.)
+  if (status === 413) return "File size must be less than 50MB.";
+  if (status === 401 || status === 403) return "Your session has expired. Please log in again.";
+  if (!err?.response) return "Couldn't reach the server. Check your connection and try again.";
+  
   return serverMessage
     ? `Upload failed: ${serverMessage}`
     : "Upload failed on the server. Please try again.";

@@ -1,4 +1,4 @@
-import doctorPatientImage from '../../assets/images/doctor-patient.png';
+import doctorPatientImage from '../../assets/images/doctor-patient.webp';
 import nexcareLogo from '../../assets/logo/nexcare-logo.svg';
 
 function LoginHero() {
@@ -29,7 +29,7 @@ function LoginHero() {
             </div>
 
             {/* Heading + description + features */}
-            <div className="relative z-10 mt-8 max-w-[480px]">
+            <div className="relative z-10 mt-6 max-w-[480px]">
 
                 <h1 className="text-4xl xl:text-[56px] font-extrabold leading-[1.05] tracking-tight text-[#0B2D5C]">
                     Your Health
@@ -37,12 +37,12 @@ function LoginHero() {
                     <span className="text-[#10A9A5]">Our Priority</span>
                 </h1>
 
-                <p className="mt-6 max-w-[380px] text-base xl:text-lg leading-7 text-[#47719D]">
+                <p className="mt-4 lg:max-w-[280px] xl:max-w-[380px] text-base xl:text-lg leading-7 text-[#47719D]">
                     Book appointments, manage your profile,
                     and get quality healthcare — all in one place.
                 </p>
 
-                <div className="mt-6 xl:mt-8 space-y-4 xl:space-y-5">
+                <div className="mt-6 xl:mt-6 space-y-4 ">
                     {/* Feature 1 */}
                     <div className="flex items-center gap-4">
                         <div className="flex shrink-0 h-10 w-10 xl:h-12 xl:w-12 items-center justify-center rounded-full border border-cyan-200 bg-white/70 backdrop-blur">
@@ -93,7 +93,7 @@ function LoginHero() {
                     Healthcare Made Simple <span className="inline-block">♡</span>
                 </p>
 
-                <div className="flex items-center gap-4 xl:gap-8 rounded-2xl border border-white/70 bg-white/45 px-4 xl:px-8 py-3 xl:py-4 backdrop-blur-md w-fit mt-2">
+                <div className="flex items-center gap-4 xl:gap-8 rounded-2xl border border-white/70 bg-white/45 px-4 xl:px-8 py-3 xl:py-3 backdrop-blur-md w-fit mt-2 ">
                     <div>
                         <p className="text-lg xl:text-xl font-bold text-[#0B2D5C]">10K+</p>
                         <p className="text-xs xl:text-sm text-[#52789E]">Happy Patients</p>

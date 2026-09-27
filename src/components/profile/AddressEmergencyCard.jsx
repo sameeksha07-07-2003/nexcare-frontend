@@ -1,4 +1,3 @@
-import React from "react";
 import { MapPin, House, Phone } from "lucide-react";
 import SectionCard from "../common/SectionCard";
 
